@@ -104,7 +104,6 @@
       <button type="button" class="emoji-btn" id="fEmojiBtn"></button>
       <input id="fTitle" placeholder="¿Qué vas a hacer?" required maxlength="80">
     </div>
-    <div class="emoji-grid" id="emojiGrid" hidden></div>
     <div class="colors" id="colors"></div>
 
     <div class="field-row">
@@ -148,6 +147,20 @@
     </div>
   </form>
 
+  <!-- Selector de color e icono -->
+  <div class="picker" id="picker" hidden>
+    <div class="pk-top">
+      <h2>Color e icono</h2>
+      <button type="button" class="close" id="pickerClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="pk-colors" id="pickerColors"></div>
+    <div class="pk-body" id="pickerBody"></div>
+    <div class="pk-bottom">
+      <div class="pk-tabs" id="pickerTabs"></div>
+      <input id="pickerSearch" type="search" placeholder="Buscar icono (ej. estudiar, gym, ducha…)" autocomplete="off">
+    </div>
+  </div>
+
   <!-- Modo enfoque -->
   <div class="focus" id="focus" hidden>
     <button class="focus-close" id="focusClose" aria-label="Cerrar">×</button>
@@ -170,6 +183,7 @@
   </div>
 
   <div class="toast" id="toast" hidden></div>
+  <script src="icons.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 // ---------- Constantes ----------
 const COLORS = ['#f07167', '#f4a261', '#e9c46a', '#8ab17d', '#2a9d8f', '#5b8def', '#9b7ede', '#e77fb3', '#8d99ae'];
-const EMOJIS = ['⏰','☀️','🧠','☕','⚡','💼','📚','✏️','💻','📞','📧','🧘','🏃','🏋️','🚴','🚶','🍳','🥗','🍽️','🛒','🧹','🧺','🚿','🛏️','🌙','💊','💧','🌱','🐶','🎵','🎮','🎨','📖','🎓','🚗','✈️','🎂','❤️','👨‍👩‍👧','✅'];
+const DEFAULT_ICON = 'check-circle';
 const DUR_CHIPS = [15, 30, 45, 60, 90, 120];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
 const DAY_LETTER = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
@@ -24,6 +24,31 @@ const fmtDur = m => m < 60 ? `${m} min` : (m % 60 ? `${Math.floor(m / 60)} h ${m
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const $ = s => document.querySelector(s);
 const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ---------- Iconos ----------
+const svgIcon = name => `<svg class="ico" viewBox="0 0 256 256" aria-hidden="true">${ICON_PATHS[name] || ICON_PATHS[DEFAULT_ICON]}</svg>`;
+// Icono de una tarea (las tareas antiguas pueden tener un emoji en lugar de icono)
+const taskIcon = t => t.icon || !t.emoji ? svgIcon(t.icon || DEFAULT_ICON) : `<span class="emo">${t.emoji}</span>`;
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+// Índice de palabras clave: [{ icon, kw }]
+const ICON_KEYWORDS = ICON_CATEGORIES.flatMap(c => c.icons.flatMap(i =>
+  i.k.split(',').map(k => ({ icon: i.n, kw: norm(k.trim()) })).filter(x => x.kw)));
+
+// Iconos que encajan con un texto, del más al menos relevante
+function suggestIcons(text, max = 8) {
+  const t = norm(text).trim();
+  if (!t) return [];
+  const words = t.split(/[^a-z0-9ñ]+/).filter(Boolean);
+  const score = new Map();
+  for (const { icon, kw } of ICON_KEYWORDS) {
+    const hit = kw.includes(' ') ? t.includes(kw)
+      : kw.length <= 3 ? words.includes(kw)
+      : words.some(w => w.startsWith(kw));
+    if (hit) score.set(icon, Math.max(score.get(icon) || 0, kw.length));
+  }
+  return [...score].sort((a, b) => b[1] - a[1]).slice(0, max).map(x => x[0]);
+}
+const autoIcon = title => suggestIcons(title, 1)[0] || DEFAULT_ICON;
 
 // ---------- Estado ----------
 let db = load();
@@ -91,7 +116,7 @@ function renderAllDay() {
   const list = tasksOn(selDate).filter(t => t.allDay);
   $('#allday').innerHTML = list.map(t => `
     <button class="ad${isDone(t, selDate) ? ' done' : ''}" data-id="${t.id}">
-      <span class="bubble" style="background:${t.color}33">${t.emoji}</span>
+      <span class="bubble" style="background:${t.color}">${taskIcon(t)}</span>
       <span>${esc(t.title)}</span>
     </button>`).join('');
 }
@@ -132,7 +157,7 @@ function renderTimeline() {
       t.repeat !== 'none' && '🔁',
     ].filter(Boolean).join(' · ');
     html += `<div class="item${done ? ' done' : ''}${current ? ' now' : ''}" data-id="${t.id}">
-      <div class="rail"><div class="pill" style="background:${t.color};height:${h}px">${current ? `<span class="prog" style="height:${prog}%"></span>` : ''}${t.emoji}</div></div>
+      <div class="rail"><div class="pill" style="background:${t.color};height:${h}px">${current ? `<span class="prog" style="height:${prog}%"></span>` : ''}${taskIcon(t)}</div></div>
       <div class="body"><span class="time">${t.start} – ${toHHMM(e)} (${fmtDur(t.dur)})</span><span class="title">${esc(t.title)}</span>${meta ? `<span class="meta">${meta}</span>` : ''}</div>
       <button class="check${done ? ' on' : ''}" style="${done ? `background:${t.color};border-color:${t.color}` : `color:${t.color}`}" aria-label="Completar">${done ? '✓' : ''}</button>
     </div>`;
@@ -178,7 +203,7 @@ function renderInbox() {
   if (!list.length) { ul.innerHTML = `<div class="empty"><b>📭</b>La bandeja está vacía.</div>`; return; }
   ul.innerHTML = list.map(t => `
     <li data-id="${t.id}">
-      <span class="ib-emoji" style="background:${t.color}33">${t.emoji}</span>
+      <span class="ib-emoji" style="background:${t.color}">${taskIcon(t)}</span>
       <span class="ib-title">${esc(t.title)}<small>${fmtDur(t.dur || db.settings.defDur)}${t.subtasks.length ? ` · ${t.subtasks.length} subtareas` : ''}</small></span>
       <button class="ib-act" data-act="today">→ Hoy</button>
     </li>`).join('');
@@ -209,7 +234,6 @@ function openSheet(task, isNew = false) {
   $('#fNotes').value = t.notes;
   $('#fDelete').hidden = isNew;
   $('#fFocus').hidden = isNew;
-  $('#emojiGrid').hidden = true;
   paintSheet();
   const wasOpen = !$('#sheet').hidden;
   $('#sheet').hidden = $('#sheetBg').hidden = false;
@@ -221,7 +245,7 @@ function openSheet(task, isNew = false) {
 }
 function paintSheet() {
   const t = editing.task;
-  const b = $('#fEmojiBtn'); b.textContent = t.emoji; b.style.background = t.color + '33';
+  const b = $('#fEmojiBtn'); b.innerHTML = taskIcon(t); b.style.background = t.color;
   $('#colors').innerHTML = COLORS.map(c => `<button type="button" data-c="${c}" class="${c === t.color ? 'on' : ''}" style="background:${c};color:${c}"></button>`).join('');
   const dur = Number($('#fDur').value);
   $('#durChips').innerHTML = DUR_CHIPS.map(d => `<button type="button" data-d="${d}" class="${d === dur ? 'on' : ''}">${fmtDur(d)}</button>`).join('');
@@ -277,8 +301,79 @@ function submitSheet(e) {
 }
 
 function newTask(extra = {}) {
-  return { id: uid(), title: '', emoji: '✅', color: COLORS[db.tasks.length % COLORS.length], date: selDate, start: null,
+  return { id: uid(), title: '', icon: extra.title ? autoIcon(extra.title) : DEFAULT_ICON, iconManual: false, color: COLORS[db.tasks.length % COLORS.length], date: selDate, start: null,
     dur: db.settings.defDur, allDay: false, repeat: 'none', notes: '', subtasks: [], doneDates: {}, ...extra };
+}
+
+// ---------- Selector «Color e icono» ----------
+function openPicker() {
+  $('#pickerSearch').value = '';
+  $('#picker').hidden = false;
+  paintPicker();
+  $('#pickerBody').scrollTop = 0;
+}
+function closePicker() { $('#picker').hidden = true; }
+function iconGrid(names) {
+  const t = editing.task;
+  return `<div class="pk-grid">${names.map(n => `<button type="button" data-icon="${n}" class="${n === t.icon ? 'on' : ''}" style="${n === t.icon ? `background:${t.color}` : ''}" aria-label="${n}">${svgIcon(n)}</button>`).join('')}</div>`;
+}
+function paintPicker() {
+  const t = editing.task;
+  $('#pickerColors').innerHTML = COLORS.map(c => `<button type="button" data-c="${c}" class="${c === t.color ? 'on' : ''}" style="background:${c};color:${c}"></button>`).join('');
+  const raw = $('#pickerSearch').value.trim(), q = norm(raw);
+  let html = '';
+  if (q) {
+    const found = [...new Set([
+      ...suggestIcons(raw, 40),
+      ...ICON_CATEGORIES.flatMap(c => c.icons).filter(i => norm(i.k).includes(q) || i.n.includes(q)).map(i => i.n),
+    ])];
+    html = found.length
+      ? `<section><div class="pk-head">Resultados</div>${iconGrid(found)}</section>`
+      : `<p class="pk-empty">No hay iconos para «${esc(raw)}».</p>`;
+  } else {
+    const sug = suggestIcons($('#fTitle').value);
+    if (sug.length) html += `<section data-cat="sug"><div class="pk-head">✦ Sugerencias</div>${iconGrid(sug)}</section>`;
+    html += ICON_CATEGORIES.map(c => `<section data-cat="${c.id}"><div class="pk-head">${svgIcon(c.tab)}${c.name}</div>${iconGrid([...new Set(c.icons.map(i => i.n))])}</section>`).join('');
+  }
+  $('#pickerBody').innerHTML = html;
+  $('#pickerTabs').innerHTML = ICON_CATEGORIES.map(c => `<button type="button" data-goto="${c.id}" aria-label="${c.name}">${svgIcon(c.tab)}</button>`).join('');
+  $('#pickerTabs').hidden = !!q;
+  spyTabs();
+}
+// Marca en la barra la categoría que se está viendo
+let tabLock = null, tabLockT; // categoría pulsada: se mantiene marcada mientras dura el desplazamiento
+function markTab(id) { $('#pickerTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.goto === id)); }
+function spyTabs() {
+  if (tabLock) return markTab(tabLock);
+  const body = $('#pickerBody'), limit = body.getBoundingClientRect().top + 60;
+  let cur = null;
+  body.querySelectorAll('section[data-cat]').forEach(sec => { if (sec.dataset.cat !== 'sug' && sec.getBoundingClientRect().top <= limit) cur = sec.dataset.cat; });
+  // Al llegar al final, la última categoría (es corta y no llega arriba del todo)
+  if (body.scrollTop > 0 && body.scrollTop + body.clientHeight >= body.scrollHeight - 2) cur = ICON_CATEGORIES.at(-1).id;
+  markTab(cur || ICON_CATEGORIES[0].id);
+}
+function bindPicker() {
+  $('#pickerClose').onclick = closePicker;
+  $('#pickerColors').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    editing.task.color = b.dataset.c; paintSheet(); paintPicker();
+  };
+  $('#pickerBody').onclick = e => {
+    const b = e.target.closest('[data-icon]'); if (!b) return;
+    const t = editing.task;
+    t.icon = b.dataset.icon; t.iconManual = true; delete t.emoji;
+    paintSheet(); closePicker();
+  };
+  $('#pickerBody').addEventListener('scroll', spyTabs, { passive: true });
+  $('#pickerTabs').onclick = e => {
+    const b = e.target.closest('[data-goto]'); if (!b) return;
+    const body = $('#pickerBody'), sec = body.querySelector(`section[data-cat="${b.dataset.goto}"]`);
+    const top = sec.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 4;
+    tabLock = b.dataset.goto; markTab(tabLock);
+    clearTimeout(tabLockT); tabLockT = setTimeout(() => { tabLock = null; }, 800);
+    body.scrollTo({ top, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+  $('#pickerSearch').oninput = paintPicker;
 }
 
 // ---------- Arrastrar para mover la hora ----------
@@ -319,7 +414,7 @@ function enableDrag() {
 const focus = { task: null, total: 0, left: 0, running: false, iv: null, mode: 'task' };
 function openFocus(t) {
   focus.task = t; setFocusMode(t.dur ? 'task' : 'pomo');
-  $('#focusEmoji').textContent = t.emoji; $('#focusTitle').textContent = t.title;
+  $('#focusEmoji').innerHTML = taskIcon(t); $('#focusEmoji').style.color = t.color; $('#focusTitle').textContent = t.title;
   $('#focus').hidden = false;
 }
 function setFocusMode(mode) {
@@ -444,12 +539,15 @@ function bind() {
   top.addEventListener('pointerup', endDrag);
   top.addEventListener('pointercancel', endDrag);
   $('#sheet').onsubmit = submitSheet;
-  $('#fEmojiBtn').onclick = () => {
-    const g = $('#emojiGrid');
-    if (!g.innerHTML) g.innerHTML = EMOJIS.map(x => `<button type="button">${x}</button>`).join('');
-    g.hidden = !g.hidden;
+  $('#fEmojiBtn').onclick = openPicker;
+  // Al escribir el título, propone el icono que encaja (salvo que se haya elegido uno a mano)
+  $('#fTitle').oninput = () => {
+    const t = editing.task;
+    if (t.iconManual) return;
+    t.icon = autoIcon($('#fTitle').value); delete t.emoji;
+    paintSheet();
   };
-  $('#emojiGrid').onclick = e => { const b = e.target.closest('button'); if (b) { editing.task.emoji = b.textContent; $('#emojiGrid').hidden = true; paintSheet(); } };
+  bindPicker();
   $('#colors').onclick = e => { const b = e.target.closest('button'); if (b) { editing.task.color = b.dataset.c; paintSheet(); } };
   $('#durChips').onclick = e => { const b = e.target.closest('button'); if (b) { $('#fDur').value = b.dataset.d; paintSheet(); } };
   $('#fDur').oninput = paintSheet;
@@ -520,7 +618,7 @@ function bind() {
   };
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { if (!$('#sheet').hidden) closeSheet(); else if (!$('#focus').hidden) $('#focusClose').click(); }
+    if (e.key === 'Escape') { if (!$('#picker').hidden) closePicker(); else if (!$('#sheet').hidden) closeSheet(); else if (!$('#focus').hidden) $('#focusClose').click(); }
   });
 }
 
