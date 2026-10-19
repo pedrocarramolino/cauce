@@ -1,5 +1,8 @@
 """Genera icons.js con los iconos de Phosphor (licencia MIT, https://phosphoricons.com).
 
+Los nombres con prefijo «mdi-» vienen de Material Design Icons (Apache 2.0,
+https://pictogrammers.com/library/mdi/) para lo que Phosphor no tiene.
+
 Uso:  python tools/build_icons.py
 Cada icono lleva palabras clave en español (separadas por comas). Las palabras
 sueltas funcionan como raíz: «estudi» coincide con «estudiar» o «estudio».
@@ -11,6 +14,7 @@ from pathlib import Path
 
 VERSION = '2.1.1'
 URL = f'https://cdn.jsdelivr.net/npm/@phosphor-icons/core@{VERSION}/assets/fill/{{}}-fill.svg'
+MDI_URL = 'https://cdn.jsdelivr.net/npm/@mdi/svg@7.4.47/svg/{}.svg'
 
 # (id, nombre, icono de la pestaña, [(icono, palabras clave), ...])
 CATALOG = [
@@ -238,6 +242,7 @@ CATALOG = [
         ('music-notes-plus', 'añadir canciones, nueva musica'),
         ('playlist', 'playlist, lista de reproduccion'),
         ('guitar', 'guitarra, ukelele, bajo'),
+        ('mdi-trumpet', 'trompeta, banda, charanga, metales, viento'),
         ('piano-keys', 'piano, teclado musical, sintetizador'),
         ('microphone', 'cantar, canto, karaoke, coro, voz'),
         ('microphone-stage', 'actuacion, escenario, actuar, bolo'),
@@ -278,10 +283,15 @@ CATALOG = [
 
 
 def fetch(name: str) -> str:
-    with urllib.request.urlopen(URL.format(name)) as r:
+    mdi = name.startswith('mdi-')
+    url = MDI_URL.format(name[4:]) if mdi else URL.format(name)
+    with urllib.request.urlopen(url) as r:
         svg = r.read().decode()
-    inner = re.search(r'<svg[^>]*>(.*)</svg>', svg, re.S).group(1).strip()
-    return re.sub(r'\s+', ' ', inner)
+    inner = re.sub(r'\s+', ' ', re.search(r'<svg[^>]*>(.*)</svg>', svg, re.S).group(1).strip())
+    # MDI usa una cuadrícula de 24 con margen: se recorta 1 por lado y se escala a la de 256
+    # de Phosphor para que el dibujo tenga el mismo tamaño que el resto
+    k = 256 / 22
+    return f'<g transform="translate({-k:.2f} {-k:.2f}) scale({k:.4f})">{inner}</g>' if mdi else inner
 
 
 def main() -> None:
@@ -294,7 +304,8 @@ def main() -> None:
             for cid, label, tab, icons in CATALOG]
     out = Path(__file__).resolve().parent.parent / 'icons.js'
     out.write_text(
-        '// Generado por tools/build_icons.py · Iconos de Phosphor (MIT, https://phosphoricons.com)\n'
+        '// Generado por tools/build_icons.py · Iconos de Phosphor (MIT, https://phosphoricons.com)'
+        ' y Material Design Icons (Apache 2.0, https://pictogrammers.com)\n'
         f'const ICON_PATHS = {json.dumps(paths, ensure_ascii=False)};\n'
         f'const ICON_CATEGORIES = {json.dumps(cats, ensure_ascii=False, indent=1)};\n',
         encoding='utf-8')
