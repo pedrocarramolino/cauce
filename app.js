@@ -37,22 +37,7 @@ function load() {
 function save() { try { localStorage.setItem(STORE, JSON.stringify(db)); } catch (e) { toast('No se pudo guardar'); } }
 
 function seed() {
-  const t = today();
-  const mk = (title, emoji, color, start, dur, extra = {}) =>
-    ({ id: uid(), title, emoji, color, date: t, start, dur, allDay: false, repeat: 'none', notes: '', subtasks: [], doneDates: {}, ...extra });
-  return {
-    settings: { theme: 'auto', defDur: 30, pomo: 25 },
-    tasks: [
-      mk('Despertar', '⏰', COLORS[0], '07:00', 15, { repeat: 'daily' }),
-      mk('Rutina matutina', '☀️', COLORS[1], '07:30', 30, { repeat: 'daily', subtasks: [{ id: uid(), t: 'Agua', d: false }, { id: uid(), t: 'Estiramientos', d: false }] }),
-      mk('Sesión de concentración', '🧠', COLORS[5], '08:15', 90),
-      mk('Pausa para café', '☕', COLORS[3], '10:00', 15),
-      mk('Revisión de energía', '⚡', COLORS[7], '13:30', 15),
-      mk('Desconectar', '🌙', COLORS[6], '22:30', 30, { repeat: 'daily' }),
-      mk('Regar plantas', '🌱', COLORS[3], null, 0, { allDay: true }),
-      { id: uid(), title: 'Llamar al dentista', emoji: '📞', color: COLORS[4], date: null, start: null, dur: 15, allDay: false, repeat: 'none', notes: '', subtasks: [], doneDates: {} },
-    ],
-  };
+  return { settings: { theme: 'auto', defDur: 30, pomo: 25 }, tasks: [] };
 }
 
 // ---------- Lógica de tareas ----------
