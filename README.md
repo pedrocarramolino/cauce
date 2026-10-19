@@ -7,6 +7,7 @@ Planificador diario visual con línea de tiempo. Web app instalable (PWA) que fu
 - Bandeja de entrada, tareas de todo el día, subtareas, notas y repetición
 - Modo enfoque con temporizador y Pomodoro
 - Tema claro/oscuro · Exportar/importar en JSON
+- Notificaciones push por tarea (al empezar, antes o al terminar), incluso con la app cerrada
 - Más de 200 iconos por categorías con buscador; el icono se elige solo según el título de la tarea
 
 Iconos: [Phosphor Icons](https://phosphoricons.com) (MIT) y [Material Design Icons](https://pictogrammers.com/library/mdi/) (Apache 2.0), generados con `python tools/build_icons.py`.
@@ -20,3 +21,14 @@ python -m http.server 5173
 ```
 
 Y abre http://localhost:5173
+
+## Notificaciones
+
+Las envía un pequeño servidor en Supabase (proyecto AulaMia, esquema `cauce`):
+
+- `supabase/functions/cauce-sync`: recibe la suscripción push de cada dispositivo y sus avisos de los próximos 14 días.
+- `supabase/functions/cauce-send`: envía los avisos que ya tocan; lo llama `pg_cron` cada minuto.
+- `supabase/migrations/`: tablas y tarea programada.
+
+En iPhone hay que añadir la app a la pantalla de inicio (iOS 16.4 o posterior) y activar las notificaciones en Ajustes.
+

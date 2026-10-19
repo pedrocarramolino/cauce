@@ -62,7 +62,10 @@ function load() {
   } catch (e) { /* almacenamiento no disponible */ }
   return seed();
 }
-function save() { try { localStorage.setItem(STORE, JSON.stringify(db)); } catch (e) { toast('No se pudo guardar'); } }
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(db)); } catch (e) { toast('No se pudo guardar'); }
+  if (typeof scheduleSync === 'function') scheduleSync();
+}
 
 function seed() {
   return { settings: { theme: 'auto', defDur: 30, pomo: 25 }, tasks: [] };
@@ -232,6 +235,7 @@ function openSheet(task, isNew = false) {
   editing.dur = t.dur || db.settings.defDur;
   setEndFromDur();
   editing.days = new Set(repeatDays(t));
+  editing.remind = new Set(t.remind || []);
   $('#fNotes').value = t.notes;
   $('#fDelete').hidden = isNew;
   $('#fFocus').hidden = isNew;
@@ -260,6 +264,16 @@ function paintSheet() {
   $('#fDays').innerHTML = DAY_ORDER.map(d => `<button type="button" data-day="${d}" class="${days.has(d) ? 'on' : ''}" aria-label="${DAY_NAME[d]}">${DAY_LETTER[d]}</button>`).join('');
   $('#repeatHint').textContent = days.size === 7 ? '· todos los días' : days.size ? `· ${DAY_ORDER.filter(d => days.has(d)).map(d => DAY_NAME[d]).join(', ')}` : '· no se repite';
   $('#timeBlock').style.display = allDay && !inbox ? 'none' : '';
+  // Avisos
+  const rem = editing.remind;
+  $('#remindBlock').classList.toggle('off', inbox);
+  $('#fRemind').querySelectorAll('button').forEach(b => {
+    b.classList.toggle('on', rem.has(b.dataset.r));
+    b.hidden = allDay && b.dataset.r === 'end';
+  });
+  $('#remindHint').textContent = !rem.size ? '· sin aviso'
+    : allDay ? `· a las ${ALL_DAY_HOUR}` : '';
+  $('#remindEnable').hidden = inbox || !rem.size || pushOn();
   $('#fStart').disabled = $('#fEnd').disabled = inbox;
 }
 // Días en que se repite una tarea (convierte también los formatos antiguos)
@@ -302,6 +316,7 @@ function submitSheet(e) {
   // Si se repite, que empiece el primer día marcado a partir de la fecha elegida
   if (t.repeat === 'days') while (!days.includes(parseISO(t.date).getDay())) t.date = addDays(t.date, 1);
   t.notes = $('#fNotes').value;
+  t.remind = REMIND_ORDER.filter(r => editing.remind.has(r) && !(t.allDay && r === 'end'));
   if (editing.isNew) db.tasks.push(t);
   else db.tasks[db.tasks.indexOf(editing.orig)] = t;
   save();
@@ -311,7 +326,7 @@ function submitSheet(e) {
 
 function newTask(extra = {}) {
   return { id: uid(), title: '', icon: extra.title ? autoIcon(extra.title) : DEFAULT_ICON, iconManual: false, color: COLORS[db.tasks.length % COLORS.length], date: selDate, start: null,
-    dur: db.settings.defDur, allDay: false, repeat: 'none', notes: '', subtasks: [], doneDates: {}, ...extra };
+    dur: db.settings.defDur, allDay: false, repeat: 'none', remind: ['start'], notes: '', subtasks: [], doneDates: {}, ...extra };
 }
 
 // ---------- Selector «Color e icono» ----------
@@ -585,6 +600,12 @@ function bind() {
     editing.days = new Set({ all: [0, 1, 2, 3, 4, 5, 6], work: [1, 2, 3, 4, 5], weekend: [6, 0], none: [] }[b.dataset.p]);
     paintSheet();
   };
+  $('#fRemind').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const s = editing.remind, r = b.dataset.r;
+    s.has(r) ? s.delete(r) : s.add(r); paintSheet();
+  };
+  bindPush();
   $('#fAllDay').onchange = paintSheet;
   $('#fInbox').onchange = paintSheet;
   $('#fSubNew').onkeydown = e => {

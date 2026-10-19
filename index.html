@@ -10,7 +10,7 @@
   <title>Cauce · Agenda del día</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -69,12 +69,15 @@
         <label class="row">Pomodoro (min)
           <input type="number" id="pomoSel" min="5" max="90" step="5">
         </label>
+        <div class="row"><span>Notificaciones<small id="pushStatus" class="row-sub"></small></span>
+          <span class="btns"><button id="pushTest" hidden>Probar</button><button id="pushToggle">Activar</button></span>
+        </div>
         <div class="row"><span>Copia de seguridad</span>
           <span class="btns"><button id="exportBtn">Exportar</button><button id="importBtn">Importar</button></span>
         </div>
         <input type="file" id="importFile" accept="application/json" hidden>
         <div class="row danger"><span>Borrar todos los datos</span><button id="wipeBtn">Borrar</button></div>
-        <p class="foot">Cauce guarda todo en este dispositivo. Instálala desde el menú del navegador («Añadir a pantalla de inicio») para usarla como app sin conexión.</p>
+        <p class="foot">Cauce guarda tus tareas en este dispositivo. Instálala desde el menú del navegador («Añadir a pantalla de inicio») para usarla como app sin conexión. En iPhone, las notificaciones solo funcionan con la app añadida a la pantalla de inicio. Para enviarlas, el servidor solo recibe el título y la hora de cada aviso.</p>
       </div>
     </section>
 
@@ -131,6 +134,18 @@
       </div>
     </div>
 
+    <div class="remind" id="remindBlock">
+      <div class="sub-head">Avisar <span id="remindHint"></span></div>
+      <div class="chips" id="fRemind">
+        <button type="button" data-r="start">Al empezar</button>
+        <button type="button" data-r="b5">5 min antes</button>
+        <button type="button" data-r="b15">15 min antes</button>
+        <button type="button" data-r="b60">1 h antes</button>
+        <button type="button" data-r="end">Al terminar</button>
+      </div>
+      <button type="button" class="push-off" id="remindEnable" hidden>🔔 Activa las notificaciones para recibir estos avisos</button>
+    </div>
+
     <div class="subtasks">
       <div class="sub-head">Subtareas</div>
       <ul id="fSubs"></ul>
@@ -184,6 +199,7 @@
 
   <div class="toast" id="toast" hidden></div>
   <script src="icons.js"></script>
+  <script src="push.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
