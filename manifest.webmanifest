@@ -1,0 +1,10 @@
+{
+  "name": "Cauce · Agenda del día",
+  "short_name": "Cauce",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fbf6f4",
+  "theme_color": "#f07167",
+  "lang": "es",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

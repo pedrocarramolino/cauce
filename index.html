@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#fbf6f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Cauce · Agenda del día</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Vista: Agenda -->
+    <section id="view-day" class="view active">
+      <header class="top">
+        <div class="top-row">
+          <button class="month" id="monthLabel" aria-label="Ir a hoy"></button>
+          <div class="top-actions">
+            <button class="icon-btn" id="prevWeek" aria-label="Semana anterior">‹</button>
+            <button class="icon-btn" id="nextWeek" aria-label="Semana siguiente">›</button>
+          </div>
+        </div>
+        <div class="week" id="week"></div>
+      </header>
+      <div class="allday" id="allday"></div>
+      <div class="replan" id="replan" hidden>
+        <span id="replanText"></span>
+        <button id="replanBtn">Replanificar</button>
+      </div>
+      <main class="timeline" id="timeline"></main>
+    </section>
+
+    <!-- Vista: Bandeja -->
+    <section id="view-inbox" class="view">
+      <header class="top simple">
+        <h1>Bandeja</h1>
+        <p class="sub">Captura ideas ahora y planifícalas después.</p>
+      </header>
+      <form class="quick" id="quickAdd">
+        <input id="quickInput" placeholder="Añadir a la bandeja…" autocomplete="off">
+        <button type="submit" aria-label="Añadir">+</button>
+      </form>
+      <ul class="inbox" id="inboxList"></ul>
+    </section>
+
+    <!-- Vista: Ajustes -->
+    <section id="view-settings" class="view">
+      <header class="top simple"><h1>Ajustes</h1></header>
+      <div class="settings">
+        <label class="row">Tema
+          <select id="themeSel">
+            <option value="auto">Automático</option>
+            <option value="light">Claro</option>
+            <option value="dark">Oscuro</option>
+          </select>
+        </label>
+        <label class="row">Duración por defecto
+          <select id="durSel">
+            <option value="15">15 min</option><option value="30">30 min</option>
+            <option value="45">45 min</option><option value="60">1 h</option>
+          </select>
+        </label>
+        <label class="row">Pomodoro (min)
+          <input type="number" id="pomoSel" min="5" max="90" step="5">
+        </label>
+        <div class="row"><span>Copia de seguridad</span>
+          <span class="btns"><button id="exportBtn">Exportar</button><button id="importBtn">Importar</button></span>
+        </div>
+        <input type="file" id="importFile" accept="application/json" hidden>
+        <div class="row danger"><span>Borrar todos los datos</span><button id="wipeBtn">Borrar</button></div>
+        <p class="foot">Cauce guarda todo en este dispositivo. Instálala desde el menú del navegador («Añadir a pantalla de inicio») para usarla como app sin conexión.</p>
+      </div>
+    </section>
+
+    <!-- Barra inferior -->
+    <nav class="tabbar">
+      <button data-view="inbox" class="tab"><span>📥</span>Bandeja</button>
+      <button data-view="day" class="tab active"><span>🗓️</span>Agenda</button>
+      <button data-view="settings" class="tab"><span>⚙️</span>Ajustes</button>
+      <button class="fab" id="fab" aria-label="Nueva tarea">+</button>
+    </nav>
+  </div>
+
+  <!-- Hoja de edición -->
+  <div class="sheet-backdrop" id="sheetBg" hidden></div>
+  <form class="sheet" id="sheet" hidden autocomplete="off">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <button type="button" class="emoji-btn" id="fEmojiBtn"></button>
+      <input id="fTitle" placeholder="¿Qué vas a hacer?" required maxlength="80">
+    </div>
+    <div class="emoji-grid" id="emojiGrid" hidden></div>
+    <div class="colors" id="colors"></div>
+
+    <div class="field-row">
+      <label>Fecha <input type="date" id="fDate"></label>
+      <label class="switch">Todo el día <input type="checkbox" id="fAllDay"></label>
+    </div>
+    <label class="switch"><input type="checkbox" id="fInbox"> Guardar en la bandeja (sin fecha)</label>
+
+    <div id="timeBlock">
+      <div class="field-row">
+        <label>Inicio <input type="time" id="fStart" step="300"></label>
+        <label>Duración <input type="number" id="fDur" min="1" max="720"></label>
+      </div>
+      <div class="chips" id="durChips"></div>
+    </div>
+
+    <label>Repetir
+      <select id="fRepeat">
+        <option value="none">Nunca</option>
+        <option value="daily">Cada día</option>
+        <option value="weekdays">Días laborables</option>
+        <option value="weekly">Cada semana</option>
+      </select>
+    </label>
+
+    <div class="subtasks">
+      <div class="sub-head">Subtareas</div>
+      <ul id="fSubs"></ul>
+      <input id="fSubNew" placeholder="+ Añadir subtarea">
+    </div>
+    <textarea id="fNotes" placeholder="Notas" rows="3"></textarea>
+
+    <div class="sheet-actions">
+      <button type="button" id="fDelete" class="ghost danger">Eliminar</button>
+      <button type="button" id="fFocus" class="ghost">⏱ Enfocar</button>
+      <button type="submit" class="primary">Guardar</button>
+    </div>
+  </form>
+
+  <!-- Modo enfoque -->
+  <div class="focus" id="focus" hidden>
+    <button class="focus-close" id="focusClose" aria-label="Cerrar">×</button>
+    <div class="focus-emoji" id="focusEmoji"></div>
+    <div class="focus-title" id="focusTitle"></div>
+    <svg class="ring" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="52" class="ring-bg"/>
+      <circle cx="60" cy="60" r="52" class="ring-fg" id="ringFg"/>
+    </svg>
+    <div class="focus-time" id="focusTime">25:00</div>
+    <div class="focus-modes">
+      <button data-mode="task">Duración tarea</button>
+      <button data-mode="pomo">Pomodoro</button>
+      <button data-mode="break">Descanso 5</button>
+    </div>
+    <div class="focus-ctrl">
+      <button id="focusToggle" class="primary">Empezar</button>
+      <button id="focusDone" class="ghost">Completar tarea</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
