@@ -37,6 +37,7 @@ button { cursor: pointer; border: 0; background: none; }
 #app { max-width: 560px; margin: 0 auto; min-height: 100%; position: relative; }
 .view { display: none; padding-bottom: calc(var(--tab-h) + 40px + env(safe-area-inset-bottom)); }
 .view.active { display: block; }
+#view-day { padding-bottom: calc(var(--tab-h) + 110px + env(safe-area-inset-bottom)); }
 
 /* Cabecera */
 .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: calc(14px + env(safe-area-inset-top)) 16px 8px; }
@@ -127,7 +128,7 @@ button { cursor: pointer; border: 0; background: none; }
 /* Barra inferior */
 .tabbar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom));
-  width: min(530px, calc(100% - 24px)); height: 64px; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 10px;
+  width: min(530px, calc(100% - 24px)); height: 64px; display: flex; align-items: center; gap: 4px; padding: 0 10px;
   background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-radius: 32px; box-shadow: var(--shadow); z-index: 10;
 }
@@ -135,7 +136,10 @@ button { cursor: pointer; border: 0; background: none; }
 .tab span { font-size: 20px; filter: grayscale(1); opacity: .7; }
 .tab.active { color: var(--accent); font-weight: 600; }
 .tab.active span { filter: none; opacity: 1; }
-.fab { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 30px; line-height: 1; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 45%, transparent); }
+.fab {
+  position: fixed; z-index: 11; bottom: calc(92px + env(safe-area-inset-bottom));
+  right: max(18px, calc(50% - 262px));
+  width: 58px; height: 58px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 30px; line-height: 1; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 45%, transparent); }
 
 /* Hoja */
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }

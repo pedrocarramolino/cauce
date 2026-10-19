@@ -342,10 +342,7 @@ function showView(v) {
 // ---------- Eventos ----------
 function bind() {
   document.querySelectorAll('.tab').forEach(b => b.onclick = () => showView(b.dataset.view));
-  $('#fab').onclick = () => {
-    const inInbox = $('#view-inbox').classList.contains('active');
-    openSheet(newTask(inInbox ? { date: null } : {}), true);
-  };
+  $('#fab').onclick = () => openSheet(newTask(), true);
   $('#week').onclick = e => { const b = e.target.closest('.day'); if (b) { selDate = b.dataset.date; render(); } };
   $('#prevWeek').onclick = () => { selDate = addDays(selDate, -7); render(); };
   $('#nextWeek').onclick = () => { selDate = addDays(selDate, 7); render(); };
