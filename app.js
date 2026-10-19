@@ -406,6 +406,54 @@ function bindPicker() {
   $('#pickerSearch').oninput = paintPicker;
 }
 
+// ---------- Deslizar la agenda para cambiar de día ----------
+const slideEls = () => [$('#timeline'), $('#allday')];
+function slideTo(dx, opacity, transition) {
+  slideEls().forEach(el => {
+    el.style.transition = transition;
+    el.style.transform = dx ? `translateX(${dx}px)` : '';
+    el.style.opacity = opacity;
+  });
+}
+// Cambia de día con animación: el contenido sale por un lado y entra por el otro
+function goDay(step) {
+  const w = innerWidth;
+  slideTo(step > 0 ? -w : w, 0, 'transform .15s ease-in, opacity .15s');
+  setTimeout(() => {
+    selDate = addDays(selDate, step); render();
+    slideTo(step > 0 ? w : -w, 0, 'none');
+    void $('#timeline').offsetWidth; // fuerza a aplicar la posición inicial antes de animar la entrada
+    slideTo(0, '', 'transform .22s ease-out, opacity .22s');
+  }, 150);
+}
+function enableDaySwipe() {
+  const area = $('#view-day');
+  let sw = null;
+  area.addEventListener('touchstart', e => {
+    // La semana tiene su propio gesto y las cápsulas se arrastran para cambiar la hora
+    if (e.touches.length !== 1 || e.target.closest('.top, .pill, .fab, .replan')) { sw = null; return; }
+    sw = { x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, dir: null };
+  }, { passive: true });
+  area.addEventListener('touchmove', e => {
+    if (!sw) return;
+    const dx = e.touches[0].clientX - sw.x, dy = e.touches[0].clientY - sw.y;
+    if (!sw.dir && Math.hypot(dx, dy) > 10) sw.dir = Math.abs(dx) > Math.abs(dy) * 1.3 ? 'h' : 'v';
+    if (sw.dir !== 'h') return;
+    e.preventDefault(); // evita que la página se desplace mientras se desliza en horizontal
+    sw.dx = dx;
+    slideTo(dx, 1 - Math.min(Math.abs(dx) / 500, .5), 'none');
+  }, { passive: false });
+  const end = () => {
+    if (!sw) return;
+    const s = sw; sw = null;
+    if (s.dir !== 'h') return;
+    if (Math.abs(s.dx) > 70) { goDay(s.dx < 0 ? 1 : -1); navigator.vibrate?.(5); }
+    else slideTo(0, '', 'transform .2s ease-out, opacity .2s');
+  };
+  area.addEventListener('touchend', end);
+  area.addEventListener('touchcancel', end);
+}
+
 // ---------- Arrastrar para mover la hora ----------
 function enableDrag() {
   let st = null;
@@ -512,6 +560,7 @@ function bind() {
     if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null;
     if (Math.abs(dx) > 50) { selDate = addDays(selDate, dx < 0 ? 7 : -7); render(); }
   });
+  enableDaySwipe();
 
   $('#timeline').addEventListener('click', e => {
     const item = e.target.closest('.item'); if (!item) return;
@@ -664,6 +713,9 @@ function bind() {
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { if (!$('#picker').hidden) closePicker(); else if (!$('#sheet').hidden) closeSheet(); else if (!$('#focus').hidden) $('#focusClose').click(); }
+    // Flechas ← → para cambiar de día en el ordenador
+    const free = $('#sheet').hidden && $('#picker').hidden && $('#focus').hidden && !e.target.closest?.('input, textarea, select');
+    if (free && $('#view-day').classList.contains('active') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) goDay(e.key === 'ArrowRight' ? 1 : -1);
   });
 }
 

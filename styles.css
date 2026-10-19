@@ -37,7 +37,7 @@ button { cursor: pointer; border: 0; background: none; }
 #app { max-width: 560px; margin: 0 auto; min-height: 100%; position: relative; }
 .view { display: none; padding-bottom: calc(var(--tab-h) + 40px + env(safe-area-inset-bottom)); }
 .view.active { display: block; }
-#view-day { padding-bottom: calc(var(--tab-h) + 110px + env(safe-area-inset-bottom)); }
+#view-day { padding-bottom: calc(var(--tab-h) + 110px + env(safe-area-inset-bottom)); overflow-x: clip; min-height: 100vh; }
 
 /* Cabecera */
 .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: calc(14px + env(safe-area-inset-top)) 16px 8px; }
