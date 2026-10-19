@@ -229,7 +229,8 @@ function openSheet(task, isNew = false) {
   $('#fInbox').checked = !t.date;
   $('#fAllDay').checked = t.allDay;
   $('#fStart').value = t.start || nextFreeStart(t.date || selDate);
-  $('#fDur').value = t.dur || db.settings.defDur;
+  editing.dur = t.dur || db.settings.defDur;
+  setEndFromDur();
   editing.days = new Set(repeatDays(t));
   $('#fNotes').value = t.notes;
   $('#fDelete').hidden = isNew;
@@ -247,7 +248,8 @@ function paintSheet() {
   const t = editing.task;
   const b = $('#fEmojiBtn'); b.innerHTML = taskIcon(t); b.style.background = t.color;
   $('#colors').innerHTML = COLORS.map(c => `<button type="button" data-c="${c}" class="${c === t.color ? 'on' : ''}" style="background:${c};color:${c}"></button>`).join('');
-  const dur = Number($('#fDur').value);
+  const dur = editing.dur;
+  $('#durHint').textContent = `· ${fmtDur(dur)}`;
   $('#durChips').innerHTML = DUR_CHIPS.map(d => `<button type="button" data-d="${d}" class="${d === dur ? 'on' : ''}">${fmtDur(d)}</button>`).join('');
   $('#fSubs').innerHTML = t.subtasks.map(s => `<li data-sid="${s.id}" class="${s.d ? 'd' : ''}"><input type="checkbox" ${s.d ? 'checked' : ''}><span>${esc(s.t)}</span><button type="button" aria-label="Quitar">×</button></li>`).join('');
   const inbox = $('#fInbox').checked, allDay = $('#fAllDay').checked;
@@ -258,7 +260,7 @@ function paintSheet() {
   $('#fDays').innerHTML = DAY_ORDER.map(d => `<button type="button" data-day="${d}" class="${days.has(d) ? 'on' : ''}" aria-label="${DAY_NAME[d]}">${DAY_LETTER[d]}</button>`).join('');
   $('#repeatHint').textContent = days.size === 7 ? '· todos los días' : days.size ? `· ${DAY_ORDER.filter(d => days.has(d)).map(d => DAY_NAME[d]).join(', ')}` : '· no se repite';
   $('#timeBlock').style.display = allDay && !inbox ? 'none' : '';
-  $('#fStart').disabled = inbox;
+  $('#fStart').disabled = $('#fEnd').disabled = inbox;
 }
 // Días en que se repite una tarea (convierte también los formatos antiguos)
 function repeatDays(t) {
@@ -267,6 +269,13 @@ function repeatDays(t) {
   if (t.repeat === 'weekdays') return [1, 2, 3, 4, 5];
   if (t.repeat === 'weekly' && t.date) return [parseISO(t.date).getDay()];
   return [];
+}
+// Pone la hora de fin según el inicio y la duración actual
+function setEndFromDur() {
+  const s = $('#fStart').value || '09:00';
+  editing.dur = Math.min(editing.dur, 1439 - toMin(s)) || 1; // la tarea no pasa de medianoche
+  $('#fEnd').value = toHHMM(toMin(s) + editing.dur);
+  $('#fEnd').classList.remove('bad');
 }
 function closeSheet(fromHistory = false) {
   if ($('#sheet').hidden) return;
@@ -286,7 +295,7 @@ function submitSheet(e) {
   t.date = inbox ? null : ($('#fDate').value || selDate);
   t.allDay = !inbox && $('#fAllDay').checked;
   t.start = inbox || t.allDay ? null : ($('#fStart').value || '09:00');
-  t.dur = Math.max(1, Number($('#fDur').value) || db.settings.defDur);
+  t.dur = Math.max(1, editing.dur || db.settings.defDur);
   const days = DAY_ORDER.filter(d => editing.days.has(d));
   t.repeat = inbox || !days.length ? 'none' : 'days';
   t.days = t.repeat === 'days' ? days : [];
@@ -555,8 +564,17 @@ function bind() {
   };
   bindPicker();
   $('#colors').onclick = e => { const b = e.target.closest('button'); if (b) { editing.task.color = b.dataset.c; paintSheet(); } };
-  $('#durChips').onclick = e => { const b = e.target.closest('button'); if (b) { $('#fDur').value = b.dataset.d; paintSheet(); } };
-  $('#fDur').oninput = paintSheet;
+  $('#durChips').onclick = e => { const b = e.target.closest('button'); if (b) { editing.dur = Number(b.dataset.d); setEndFromDur(); paintSheet(); } };
+  // Al cambiar el inicio se mantiene la duración y se mueve la hora de fin
+  $('#fStart').oninput = () => { setEndFromDur(); paintSheet(); };
+  // Al cambiar la hora de fin se recalcula la duración
+  $('#fEnd').oninput = () => {
+    const s = $('#fStart').value, e = $('#fEnd').value;
+    if (!s || !e) return;
+    const d = toMin(e) - toMin(s);
+    $('#fEnd').classList.toggle('bad', d <= 0);
+    if (d > 0) { editing.dur = d; paintSheet(); }
+  };
   $('#fDays').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     const d = Number(b.dataset.day), s = editing.days;
