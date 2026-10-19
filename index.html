@@ -95,7 +95,11 @@
   <!-- Hoja de edición -->
   <div class="sheet-backdrop" id="sheetBg" hidden></div>
   <form class="sheet" id="sheet" hidden autocomplete="off">
-    <div class="grab"></div>
+    <div class="sheet-top">
+      <button type="button" class="link" id="fCancel">Cancelar</button>
+      <div class="grab" id="grab"></div>
+      <button type="button" class="close" id="fClose" aria-label="Cerrar">×</button>
+    </div>
     <div class="sheet-head">
       <button type="button" class="emoji-btn" id="fEmojiBtn"></button>
       <input id="fTitle" placeholder="¿Qué vas a hacer?" required maxlength="80">
@@ -133,7 +137,9 @@
       <ul id="fSubs"></ul>
       <input id="fSubNew" placeholder="+ Añadir subtarea">
     </div>
-    <textarea id="fNotes" placeholder="Notas" rows="3"></textarea>
+    <label class="notes">Notas
+      <textarea id="fNotes" placeholder="Añade detalles, enlaces o lo que necesites recordar…" rows="4"></textarea>
+    </label>
 
     <div class="sheet-actions">
       <button type="button" id="fDelete" class="ghost danger">Eliminar</button>

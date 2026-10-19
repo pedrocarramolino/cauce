@@ -211,7 +211,12 @@ function openSheet(task, isNew = false) {
   $('#fFocus').hidden = isNew;
   $('#emojiGrid').hidden = true;
   paintSheet();
+  const wasOpen = !$('#sheet').hidden;
   $('#sheet').hidden = $('#sheetBg').hidden = false;
+  $('#sheet').scrollTop = 0;
+  document.body.classList.add('sheet-open');
+  // Entrada en el historial para que el botón «atrás» del móvil cierre la hoja
+  if (!wasOpen) history.pushState({ sheet: true }, '');
   if (isNew) setTimeout(() => $('#fTitle').focus(), 50);
 }
 function paintSheet() {
@@ -239,7 +244,15 @@ function repeatDays(t) {
   if (t.repeat === 'weekly' && t.date) return [parseISO(t.date).getDay()];
   return [];
 }
-function closeSheet() { $('#sheet').hidden = $('#sheetBg').hidden = true; editing = null; }
+function closeSheet(fromHistory = false) {
+  if ($('#sheet').hidden) return;
+  $('#sheet').hidden = $('#sheetBg').hidden = true;
+  $('#sheet').style.transform = '';
+  document.body.classList.remove('sheet-open');
+  editing = null;
+  if (!fromHistory && history.state?.sheet) { pendingBack = true; history.back(); }
+}
+let pendingBack = false;
 
 function submitSheet(e) {
   e.preventDefault();
@@ -407,7 +420,29 @@ function bind() {
   };
 
   // Hoja
-  $('#sheetBg').onclick = closeSheet;
+  $('#sheetBg').onclick = () => closeSheet();
+  $('#fCancel').onclick = () => closeSheet();
+  $('#fClose').onclick = () => closeSheet();
+  window.addEventListener('popstate', () => {
+    if (pendingBack) { pendingBack = false; return; } // «atrás» lanzado por nosotros al cerrar
+    closeSheet(true);
+  });
+  // Deslizar hacia abajo desde la cabecera para cerrar
+  let dragY = null;
+  const top = $('.sheet-top'), sheet = $('#sheet');
+  top.addEventListener('pointerdown', e => { if (!e.target.closest('button')) { dragY = e.clientY; top.setPointerCapture(e.pointerId); } });
+  top.addEventListener('pointermove', e => {
+    if (dragY === null) return;
+    const dy = Math.max(0, e.clientY - dragY);
+    sheet.style.transform = `translate(-50%, ${dy}px)`;
+  });
+  const endDrag = e => {
+    if (dragY === null) return;
+    const dy = e.clientY - dragY; dragY = null;
+    if (dy > 90) closeSheet(); else sheet.style.transform = '';
+  };
+  top.addEventListener('pointerup', endDrag);
+  top.addEventListener('pointercancel', endDrag);
   $('#sheet').onsubmit = submitSheet;
   $('#fEmojiBtn').onclick = () => {
     const g = $('#emojiGrid');
