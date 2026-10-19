@@ -4,6 +4,9 @@
 const COLORS = ['#f07167', '#f4a261', '#e9c46a', '#8ab17d', '#2a9d8f', '#5b8def', '#9b7ede', '#e77fb3', '#8d99ae'];
 const EMOJIS = ['⏰','☀️','🧠','☕','⚡','💼','📚','✏️','💻','📞','📧','🧘','🏃','🏋️','🚴','🚶','🍳','🥗','🍽️','🛒','🧹','🧺','🚿','🛏️','🌙','💊','💧','🌱','🐶','🎵','🎮','🎨','📖','🎓','🚗','✈️','🎂','❤️','👨‍👩‍👧','✅'];
 const DUR_CHIPS = [15, 30, 45, 60, 90, 120];
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
+const DAY_LETTER = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+const DAY_NAME = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
 const DOW = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const STORE = 'cauce:v1';
@@ -49,6 +52,7 @@ function occursOn(t, date) {
   if (t.repeat === 'daily') return true;
   if (t.repeat === 'weekdays') return dow >= 1 && dow <= 5;
   if (t.repeat === 'weekly') return parseISO(t.date).getDay() === dow;
+  if (t.repeat === 'days') return (t.days || []).includes(dow);
   return false;
 }
 const isDone = (t, date) => !!t.doneDates[date || 'inbox'];
@@ -201,7 +205,7 @@ function openSheet(task, isNew = false) {
   $('#fAllDay').checked = t.allDay;
   $('#fStart').value = t.start || nextFreeStart(t.date || selDate);
   $('#fDur').value = t.dur || db.settings.defDur;
-  $('#fRepeat').value = t.repeat;
+  editing.days = new Set(repeatDays(t));
   $('#fNotes').value = t.notes;
   $('#fDelete').hidden = isNew;
   $('#fFocus').hidden = isNew;
@@ -220,9 +224,20 @@ function paintSheet() {
   const inbox = $('#fInbox').checked, allDay = $('#fAllDay').checked;
   $('#fDate').disabled = inbox;
   $('#fAllDay').disabled = inbox;
-  $('#fRepeat').disabled = inbox;
+  $('#repeatBlock').classList.toggle('off', inbox);
+  const days = editing.days;
+  $('#fDays').innerHTML = DAY_ORDER.map(d => `<button type="button" data-day="${d}" class="${days.has(d) ? 'on' : ''}" aria-label="${DAY_NAME[d]}">${DAY_LETTER[d]}</button>`).join('');
+  $('#repeatHint').textContent = days.size === 7 ? '· todos los días' : days.size ? `· ${DAY_ORDER.filter(d => days.has(d)).map(d => DAY_NAME[d]).join(', ')}` : '· no se repite';
   $('#timeBlock').style.display = allDay && !inbox ? 'none' : '';
   $('#fStart').disabled = inbox;
+}
+// Días en que se repite una tarea (convierte también los formatos antiguos)
+function repeatDays(t) {
+  if (t.repeat === 'days') return t.days || [];
+  if (t.repeat === 'daily') return [0, 1, 2, 3, 4, 5, 6];
+  if (t.repeat === 'weekdays') return [1, 2, 3, 4, 5];
+  if (t.repeat === 'weekly' && t.date) return [parseISO(t.date).getDay()];
+  return [];
 }
 function closeSheet() { $('#sheet').hidden = $('#sheetBg').hidden = true; editing = null; }
 
@@ -235,7 +250,11 @@ function submitSheet(e) {
   t.allDay = !inbox && $('#fAllDay').checked;
   t.start = inbox || t.allDay ? null : ($('#fStart').value || '09:00');
   t.dur = Math.max(1, Number($('#fDur').value) || db.settings.defDur);
-  t.repeat = inbox ? 'none' : $('#fRepeat').value;
+  const days = DAY_ORDER.filter(d => editing.days.has(d));
+  t.repeat = inbox || !days.length ? 'none' : 'days';
+  t.days = t.repeat === 'days' ? days : [];
+  // Si se repite, que empiece el primer día marcado a partir de la fecha elegida
+  if (t.repeat === 'days') while (!days.includes(parseISO(t.date).getDay())) t.date = addDays(t.date, 1);
   t.notes = $('#fNotes').value;
   if (editing.isNew) db.tasks.push(t);
   else db.tasks[db.tasks.indexOf(editing.orig)] = t;
@@ -399,6 +418,16 @@ function bind() {
   $('#colors').onclick = e => { const b = e.target.closest('button'); if (b) { editing.task.color = b.dataset.c; paintSheet(); } };
   $('#durChips').onclick = e => { const b = e.target.closest('button'); if (b) { $('#fDur').value = b.dataset.d; paintSheet(); } };
   $('#fDur').oninput = paintSheet;
+  $('#fDays').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = Number(b.dataset.day), s = editing.days;
+    s.has(d) ? s.delete(d) : s.add(d); paintSheet();
+  };
+  $('#repeatPresets').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    editing.days = new Set({ all: [0, 1, 2, 3, 4, 5, 6], work: [1, 2, 3, 4, 5], weekend: [6, 0], none: [] }[b.dataset.p]);
+    paintSheet();
+  };
   $('#fAllDay').onchange = paintSheet;
   $('#fInbox').onchange = paintSheet;
   $('#fSubNew').onkeydown = e => {

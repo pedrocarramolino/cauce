@@ -111,14 +111,16 @@
       <div class="chips" id="durChips"></div>
     </div>
 
-    <label>Repetir
-      <select id="fRepeat">
-        <option value="none">Nunca</option>
-        <option value="daily">Cada día</option>
-        <option value="weekdays">Días laborables</option>
-        <option value="weekly">Cada semana</option>
-      </select>
-    </label>
+    <div class="repeat" id="repeatBlock">
+      <div class="sub-head">Repetir los días <span id="repeatHint"></span></div>
+      <div class="days" id="fDays"></div>
+      <div class="chips" id="repeatPresets">
+        <button type="button" data-p="all">Todos los días</button>
+        <button type="button" data-p="work">Laborables</button>
+        <button type="button" data-p="weekend">Fin de semana</button>
+        <button type="button" data-p="none">No repetir</button>
+      </div>
+    </div>
 
     <div class="subtasks">
       <div class="sub-head">Subtareas</div>
