@@ -342,7 +342,13 @@ function paintPicker() {
 }
 // Marca en la barra la categoría que se está viendo
 let tabLock = null, tabLockT; // categoría pulsada: se mantiene marcada mientras dura el desplazamiento
-function markTab(id) { $('#pickerTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.goto === id)); }
+function markTab(id) {
+  const bar = $('#pickerTabs');
+  bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.goto === id));
+  // Desplaza la barra para que la categoría marcada se vea
+  const on = bar.querySelector('.on');
+  if (on) bar.scrollTo({ left: on.offsetLeft - (bar.clientWidth - on.offsetWidth) / 2, behavior: 'smooth' });
+}
 function spyTabs() {
   if (tabLock) return markTab(tabLock);
   const body = $('#pickerBody'), limit = body.getBoundingClientRect().top + 60;
