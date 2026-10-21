@@ -34,7 +34,7 @@ const AUTH_MODES = {
   },
   reset: {
     title: 'Nueva contraseña', sub: 'Elige una contraseña nueva para tu cuenta.',
-    fields: ['password', 'password2'], submit: 'Guardar contraseña', pass: 'new-password', noSkip: true,
+    fields: ['password', 'password2'], submit: 'Guardar contraseña', pass: 'new-password',
   },
 };
 let authMode = 'login', sentInfo = null;
@@ -48,7 +48,6 @@ function openAuth(mode = 'login') {
 function closeAuth() {
   $('#auth').hidden = true;
   document.body.classList.remove('auth-open');
-  db.settings.authSeen = true; save();
 }
 
 function setAuthMode(mode, keepEmail = true) {
@@ -70,7 +69,6 @@ function setAuthMode(mode, keepEmail = true) {
   $('#authForm').hidden = false;
   $('#authSent').hidden = true;
   $('#authBack').hidden = !m.back;
-  $('#authSkip').hidden = !!m.noSkip;
   $('#authSwitch').innerHTML = m.switchTo
     ? `${m.switchText} <button type="button" class="link" data-go="${m.switchTo}">${m.switchLabel}</button>` : '';
   showAuthError('');
@@ -324,7 +322,6 @@ function bindAuth() {
   $('#authSwitch').onclick = e => { const b = e.target.closest('[data-go]'); if (b) setAuthMode(b.dataset.go); };
   $('#authForgot').onclick = () => setAuthMode('forgot');
   $('#authBack').onclick = () => setAuthMode(AUTH_MODES[authMode].back || 'login');
-  $('#authSkip').onclick = closeAuth;
   $('#authResend').onclick = resendAuthEmail;
   document.querySelectorAll('.pw-toggle').forEach(b => b.onclick = () => {
     const i = $('#' + b.dataset.target), show = i.type === 'password';
@@ -346,15 +343,15 @@ function bindAuth() {
       if (!$('#auth').hidden && authMode !== 'reset') { closeAuth(); toast(`Hola${s.user.user_metadata?.nombre ? ', ' + s.user.user_metadata.nombre : ''} 👋`); }
       setTimeout(cloudSync, 0);
     }
-    if (event === 'SIGNED_OUT' && was) clearLocalData();
+    if (event === 'SIGNED_OUT' && was) { clearLocalData(); openAuth('login'); }
   });
 
-  // Primera vez que se abre la app: pantalla de iniciar sesión (con enlace a crear cuenta; se puede saltar)
+  // Iniciar sesión es obligatorio: sin sesión, la app siempre abre en esta pantalla
   sb.auth.getSession().then(({ data }) => {
     session = data.session;
     paintAccount();
     const fromEmail = /type=(signup|recovery|magiclink)|access_token|error_description/.test(location.hash);
-    if (!session && !db.settings.authSeen && !fromEmail) openAuth('login');
+    if (!session && !fromEmail) openAuth('login');
     if (location.hash.includes('error_description')) {
       const p = new URLSearchParams(location.hash.slice(1));
       openAuth('login');
