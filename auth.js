@@ -349,12 +349,12 @@ function bindAuth() {
     if (event === 'SIGNED_OUT' && was) clearLocalData();
   });
 
-  // Primera vez que se abre la app: se ofrece crear cuenta (se puede saltar)
+  // Primera vez que se abre la app: pantalla de iniciar sesión (con enlace a crear cuenta; se puede saltar)
   sb.auth.getSession().then(({ data }) => {
     session = data.session;
     paintAccount();
     const fromEmail = /type=(signup|recovery|magiclink)|access_token|error_description/.test(location.hash);
-    if (!session && !db.settings.authSeen && !fromEmail) openAuth('signup');
+    if (!session && !db.settings.authSeen && !fromEmail) openAuth('login');
     if (location.hash.includes('error_description')) {
       const p = new URLSearchParams(location.hash.slice(1));
       openAuth('login');
