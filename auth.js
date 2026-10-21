@@ -25,7 +25,7 @@ const AUTH_MODES = {
   },
   signup: {
     title: 'Crea tu cuenta', sub: 'Gratis. Tus tareas guardadas en la nube y sincronizadas entre tu móvil y tu ordenador.',
-    fields: ['name', 'email', 'password'], submit: 'Crear cuenta', pass: 'new-password',
+    fields: ['name', 'email', 'password', 'password2'], submit: 'Crear cuenta', pass: 'new-password',
     switchText: '¿Ya tienes cuenta?', switchTo: 'login', switchLabel: 'Iniciar sesión',
   },
   forgot: {
@@ -111,7 +111,9 @@ function validateAuth(showEmail = false) {
   if (m.fields.includes('password2')) {
     const same = pw2 && pw2 === pw;
     ok &&= !!same;
-    $('#aPass2Msg').textContent = pw2 && !same ? 'Las contraseñas no coinciden.' : '';
+    $('#aPass2Msg').textContent = !pw2 ? '' : same ? '✓ Las contraseñas coinciden' : 'Las contraseñas no coinciden.';
+    $('#aPass2Msg').classList.toggle('good', !!same);
+    $('#aPass2').classList.toggle('bad', !!pw2 && !same);
   }
   $('#authSubmit').disabled = !ok;
   return ok;

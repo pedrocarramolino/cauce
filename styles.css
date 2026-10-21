@@ -301,11 +301,11 @@ body.auth-open { overflow: hidden; }
 .pw-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; min-width: 80px; padding: 0 12px; border-radius: 10px; color: var(--accent-text); font-weight: 600; font-size: 15px; }
 .field-msg { font-size: 13px; color: var(--muted-text); min-height: 0; }
 .field-msg:empty { display: none; }
-.field-msg.good { color: #2f8a4f; }
+.field-msg.good { color: #247a41; } /* 5,0:1 sobre el fondo claro */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .field-msg.good { color: #6fd08c; } }
 :root[data-theme="dark"] .field-msg.good { color: #6fd08c; }
 #aEmailErr { color: var(--danger-text); }
-#aPass2Msg { color: var(--danger-text); }
+#aPass2Msg:not(.good) { color: var(--danger-text); }
 
 .form-error { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 15px; line-height: 1.4;
   color: var(--danger-text); background: color-mix(in srgb, var(--danger-text) 10%, var(--surface)); }
