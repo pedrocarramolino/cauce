@@ -65,6 +65,7 @@ function load() {
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(db)); } catch (e) { toast('No se pudo guardar'); }
   if (typeof scheduleSync === 'function') scheduleSync();
+  if (typeof scheduleCloudSync === 'function') scheduleCloudSync();
 }
 
 function seed() {
@@ -655,6 +656,7 @@ function bind() {
     s.has(r) ? s.delete(r) : s.add(r); paintSheet();
   };
   bindPush();
+  bindAuth();
   $('#fAllDay').onchange = paintSheet;
   $('#fInbox').onchange = paintSheet;
   $('#fSubNew').onkeydown = e => {

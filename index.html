@@ -69,6 +69,12 @@
         <label class="row">Pomodoro (min)
           <input type="number" id="pomoSel" min="5" max="90" step="5">
         </label>
+        <div class="row"><span>Cuenta<small id="accountStatus" class="row-sub">Sin iniciar sesión</small></span>
+          <span class="btns"><button id="accountBtn">Iniciar sesión</button></span>
+        </div>
+        <div class="row danger" id="deleteAccountRow" hidden><span>Eliminar cuenta<small class="row-sub">Borra tus tareas guardadas en la nube</small></span>
+          <button id="deleteAccountBtn">Eliminar</button>
+        </div>
         <div class="row"><span>Notificaciones<small id="pushStatus" class="row-sub"></small></span>
           <span class="btns"><button id="pushTest" hidden>Probar</button><button id="pushToggle">Activar</button></span>
         </div>
@@ -162,6 +168,60 @@
     </div>
   </form>
 
+  <!-- Inicio de sesión, registro y recuperar contraseña -->
+  <section class="auth" id="auth" hidden aria-labelledby="authTitle" data-mode="login">
+    <div class="auth-inner">
+      <div class="auth-top">
+        <button type="button" class="auth-back link" id="authBack" hidden>‹ Volver</button>
+        <button type="button" class="auth-skip link" id="authSkip">Ahora no</button>
+      </div>
+
+      <div class="auth-brand" aria-hidden="true"><img src="icon.svg" alt="" width="72" height="72"></div>
+      <h1 id="authTitle">Inicia sesión</h1>
+      <p class="auth-sub" id="authSub"></p>
+
+      <form id="authForm" class="auth-form" novalidate>
+        <div class="field" data-field="name">
+          <label for="aName">Nombre</label>
+          <input id="aName" name="name" autocomplete="given-name" autocapitalize="words" enterkeyhint="next" maxlength="60" placeholder="Cómo te llamas">
+        </div>
+        <div class="field" data-field="email">
+          <label for="aEmail">Correo electrónico</label>
+          <input id="aEmail" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" placeholder="nombre@ejemplo.com" aria-describedby="aEmailErr">
+          <small class="field-msg" id="aEmailErr" aria-live="polite"></small>
+        </div>
+        <div class="field" data-field="password">
+          <label for="aPass" id="aPassLabel">Contraseña</label>
+          <div class="pw">
+            <input id="aPass" name="password" type="password" autocomplete="current-password" enterkeyhint="go" aria-describedby="aPassMsg">
+            <button type="button" class="pw-toggle" data-target="aPass" aria-pressed="false">Mostrar</button>
+          </div>
+          <small class="field-msg" id="aPassMsg" aria-live="polite"></small>
+        </div>
+        <div class="field" data-field="password2">
+          <label for="aPass2">Repite la contraseña</label>
+          <div class="pw">
+            <input id="aPass2" name="password2" type="password" autocomplete="new-password" enterkeyhint="go" aria-describedby="aPass2Msg">
+            <button type="button" class="pw-toggle" data-target="aPass2" aria-pressed="false">Mostrar</button>
+          </div>
+          <small class="field-msg" id="aPass2Msg" aria-live="polite"></small>
+        </div>
+
+        <p class="form-error" id="authError" role="alert" hidden></p>
+        <button type="submit" class="primary auth-submit" id="authSubmit" disabled>Iniciar sesión</button>
+        <button type="button" class="link auth-forgot" id="authForgot">¿Has olvidado tu contraseña?</button>
+      </form>
+
+      <div class="auth-sent" id="authSent" hidden>
+        <div class="sent-icon" aria-hidden="true">✉️</div>
+        <p id="authSentText"></p>
+        <button type="button" class="ghost" id="authResend">Reenviar correo</button>
+      </div>
+
+      <p class="auth-switch" id="authSwitch"></p>
+    </div>
+  </section>
+
   <!-- Selector de color e icono -->
   <div class="picker" id="picker" hidden>
     <div class="pk-top">
@@ -198,8 +258,10 @@
   </div>
 
   <div class="toast" id="toast" hidden></div>
+  <script src="vendor/supabase.js"></script>
   <script src="icons.js"></script>
   <script src="push.js"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

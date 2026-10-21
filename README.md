@@ -7,6 +7,7 @@ Planificador diario visual con línea de tiempo. Web app instalable (PWA) que fu
 - Bandeja de entrada, tareas de todo el día, subtareas, notas y repetición
 - Modo enfoque con temporizador y Pomodoro
 - Tema claro/oscuro · Exportar/importar en JSON
+- Cuenta opcional (correo y contraseña) con las tareas sincronizadas entre dispositivos
 - Notificaciones push por tarea (al empezar, antes o al terminar), incluso con la app cerrada
 - Más de 200 iconos por categorías con buscador; el icono se elige solo según el título de la tarea
 
@@ -31,4 +32,11 @@ Las envía un pequeño servidor en Supabase (proyecto AulaMia, esquema `cauce`):
 - `supabase/migrations/`: tablas y tarea programada.
 
 En iPhone hay que añadir la app a la pantalla de inicio (iOS 16.4 o posterior) y activar las notificaciones en Ajustes.
+
+## Cuentas y sincronización
+
+Las cuentas son de Supabase y se comparten con el proyecto AulaMia (las altas desde Cauce llevan
+`app: cauce` y no crean perfil en AulaMia). Las tareas viven en `cauce.tasks` y solo se accede a
+ellas con las funciones `cauce_pull`, `cauce_push` y `cauce_delete_account`, que trabajan siempre
+con el usuario de la sesión. La librería `vendor/supabase.js` es `@supabase/supabase-js` 2.49.4 (MIT).
 

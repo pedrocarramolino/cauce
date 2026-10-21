@@ -255,3 +255,67 @@ body.sheet-open { overflow: hidden; }
 .remind.off { opacity: .4; pointer-events: none; }
 .push-off { margin-top: 8px; width: 100%; text-align: left; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--text); font-size: 14px; }
 .row-sub { display: block; font-size: 12px; color: var(--muted); }
+
+/* ---------- Acceso: inicio de sesión, registro y contraseña ---------- */
+:root {
+  --accent-strong: #d9544a;   /* fondo de botón: 3,95:1 con texto blanco */
+  --accent-text: #c0392f;     /* enlaces sobre fondo claro: 5,07:1 */
+  --muted-text: #6b6469;      /* texto secundario: 5,36:1 */
+  --danger-text: #c62a2f;     /* errores: 5,19:1 */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --accent-text: #ff8a80; --muted-text: var(--muted); --danger-text: #ff6b6b; }
+}
+:root[data-theme="dark"] { --accent-text: #ff8a80; --muted-text: var(--muted); --danger-text: #ff6b6b; }
+
+body.auth-open { overflow: hidden; }
+.auth {
+  position: fixed; inset: 0; z-index: 35; background: var(--bg); overflow-y: auto;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  animation: fadeUp .25s ease-out;
+}
+.auth-inner { max-width: 420px; margin: 0 auto; padding: 8px 24px 32px; display: flex; flex-direction: column; min-height: 100%; }
+.auth-top { display: flex; justify-content: space-between; align-items: center; min-height: 48px; }
+.auth-top .auth-skip { margin-left: auto; }
+.auth .link { color: var(--accent-text); font-weight: 600; font-size: 16px; padding: 12px 4px; min-height: 44px; }
+.auth-brand { margin: 12px 0 18px; }
+.auth-brand img { display: block; width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent); }
+.auth h1 { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -.6px; font-weight: 800; }
+.auth-sub { margin: 8px 0 0; color: var(--muted-text); font-size: 16px; line-height: 1.45; }
+.auth-sub:empty { display: none; }
+
+.auth-form { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 14px; font-weight: 600; color: var(--muted-text); }
+.field input {
+  font-size: 17px; /* 16 px o más evita el zoom automático de iOS */
+  height: 52px; padding: 0 16px; border-radius: 14px; border: 1.5px solid transparent;
+  background: var(--surface); color: var(--text); outline: none; width: 100%;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03); transition: border-color .15s;
+}
+.field input::placeholder { color: var(--muted); }
+.field input:focus { border-color: var(--accent); }
+.field input.bad { border-color: var(--danger-text); }
+.pw { position: relative; }
+.pw input { padding-right: 92px; }
+.pw-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; min-width: 80px; padding: 0 12px; border-radius: 10px; color: var(--accent-text); font-weight: 600; font-size: 15px; }
+.field-msg { font-size: 13px; color: var(--muted-text); min-height: 0; }
+.field-msg:empty { display: none; }
+.field-msg.good { color: #2f8a4f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .field-msg.good { color: #6fd08c; } }
+:root[data-theme="dark"] .field-msg.good { color: #6fd08c; }
+#aEmailErr { color: var(--danger-text); }
+#aPass2Msg { color: var(--danger-text); }
+
+.form-error { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 15px; line-height: 1.4;
+  color: var(--danger-text); background: color-mix(in srgb, var(--danger-text) 10%, var(--surface)); }
+.auth-submit { background: var(--accent-strong); height: 54px; font-size: 17px; margin-top: 4px; transition: opacity .15s; }
+.auth-submit:disabled { opacity: .45; cursor: not-allowed; }
+.auth-forgot { align-self: center; }
+
+.auth-sent { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+.auth-sent p { margin: 0; font-size: 17px; line-height: 1.5; }
+.sent-icon { font-size: 44px; }
+.auth-switch { margin: auto 0 0; padding-top: 28px; text-align: center; color: var(--muted-text); font-size: 15px; }
+.auth-switch .link { font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .auth { animation: none; } }
